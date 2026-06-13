@@ -1,4 +1,4 @@
-const { Client, GatewayIntentBits, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, ModalBuilder, TextInputBuilder, TextInputStyle } = require('discord.js');
+const { Client, GatewayIntentBits, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, ModalBuilder, TextInputBuilder, TextInputStyle, PermissionFlagsBits } = require('discord.js');
 const express = require('express');
 require('dotenv').config();
 
@@ -19,15 +19,19 @@ const client = new Client({
 let isApplicationOpen = true; 
 
 client.once('ready', () => {
-    console.log(`Logged in as ${client.user.tag}!`);
+    console.log(`Logged in as ${client.user.tag}! Bot ready hai.`);
 });
 
 // Commands
 client.on('messageCreate', async (message) => {
     if (!message.guild || message.author.bot) return;
 
+    // Setup Application Button Command
     if (message.content === '!setup-app') {
-        if (!message.member.permissions.has('Administrator')) return message.reply("Aapke paas permission nahi hai.");
+        // Fix: Use PermissionFlagsBits.Administrator instead of string
+        if (!message.member.permissions.has(PermissionFlagsBits.Administrator)) {
+            return message.reply("Aapke paas permission nahi hai.");
+        }
 
         const embed = new EmbedBuilder()
             .setTitle("📝 Staff Recruitment")
@@ -44,8 +48,12 @@ client.on('messageCreate', async (message) => {
         await message.channel.send({ embeds: [embed], components: [row] });
     }
 
+    // Toggle Application Open/Close Command
     if (message.content === '!app-toggle') {
-        if (!message.member.permissions.has('Administrator')) return message.reply("Aapke paas permission nahi hai.");
+        // Fix: Use PermissionFlagsBits.Administrator instead of string
+        if (!message.member.permissions.has(PermissionFlagsBits.Administrator)) {
+            return message.reply("Aapke paas permission nahi hai.");
+        }
 
         isApplicationOpen = !isApplicationOpen;
         const status = isApplicationOpen ? "🟢 OPEN" : "🔴 CLOSED";
@@ -96,7 +104,7 @@ client.on('interactionCreate', async (interaction) => {
             await logChannel.send({ embeds: [appEmbed] });
             await interaction.reply({ content: "Aapka application submit ho gaya hai!", ephemeral: true });
         } else {
-            await interaction.reply({ content: "Error: Log channel nahi mila.", ephemeral: true });
+            await interaction.reply({ content: "Error: Log channel nahi mila. Check karein ki APPLICATION_CHANNEL_ID sahi hai ya nahi.", ephemeral: true });
         }
     }
 });
