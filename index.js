@@ -19,7 +19,7 @@ const client = new Client({
 let isApplicationOpen = true; 
 
 client.once('ready', () => {
-    console.log(`Logged in as ${client.user.username}!`); // ✅ Fixed tag issue here
+    console.log(`Logged in as ${client.user.username}!`);
 });
 
 // Commands
@@ -62,14 +62,21 @@ client.on('interactionCreate', async (interaction) => {
 
         const modal = new ModalBuilder().setCustomId('staff_modal').setTitle('Staff Application Form');
 
+        // Original 3 Questions
         const ageInput = new TextInputBuilder().setCustomId('app_age').setLabel('What is your age?').setStyle(TextInputStyle.Short).setRequired(true);
         const reasonInput = new TextInputBuilder().setCustomId('app_reason').setLabel('Why should we accept you as staff?').setStyle(TextInputStyle.Paragraph).setRequired(true);
         const experienceInput = new TextInputBuilder().setCustomId('app_exp').setLabel('Do you have any previous experience?').setStyle(TextInputStyle.Paragraph).setRequired(false);
+        
+        // 2 New Advance Questions (Maxing out the Discord Modal limit to 5)
+        const activityInput = new TextInputBuilder().setCustomId('app_activity').setLabel('How many hours can you dedicate daily?').setStyle(TextInputStyle.Short).setRequired(true);
+        const scenarioInput = new TextInputBuilder().setCustomId('app_scenario').setLabel('How do you handle toxic players or hackers?').setStyle(TextInputStyle.Paragraph).setRequired(true);
 
         modal.addComponents(
             new ActionRowBuilder().addComponents(ageInput),
             new ActionRowBuilder().addComponents(reasonInput),
-            new ActionRowBuilder().addComponents(experienceInput)
+            new ActionRowBuilder().addComponents(experienceInput),
+            new ActionRowBuilder().addComponents(activityInput),
+            new ActionRowBuilder().addComponents(scenarioInput)
         );
         await interaction.showModal(modal);
     }
@@ -78,23 +85,42 @@ client.on('interactionCreate', async (interaction) => {
         const age = interaction.fields.getTextInputValue('app_age');
         const reason = interaction.fields.getTextInputValue('app_reason');
         const exp = interaction.fields.getTextInputValue('app_exp') || "None";
+        const activity = interaction.fields.getTextInputValue('app_activity');
+        const scenario = interaction.fields.getTextInputValue('app_scenario');
 
         const logChannel = client.channels.cache.get(process.env.APPLICATION_CHANNEL_ID);
 
         const appEmbed = new EmbedBuilder()
-            .setTitle("New Staff Application!")
+            .setTitle("New Staff Application Submitted!")
             .setColor("#32a852")
             .addFields(
                 { name: 'Applicant', value: `${interaction.user.username} (${interaction.user.id})`, inline: true },
                 { name: 'Age', value: age, inline: true },
-                { name: 'Reason', value: reason },
-                { name: 'Experience', value: exp }
+                { name: 'Daily Activity', value: activity, inline: true },
+                { name: 'Reason to Join', value: reason },
+                { name: 'Previous Experience', value: exp },
+                { name: 'Handling Toxicity/Hackers', value: scenario }
             )
             .setTimestamp();
 
+        // Remaining 8 Advance Questions that will be sent to the logs for Phase-2 interview
+        const remainingQuestionsEmbed = new EmbedBuilder()
+            .setTitle("📝 Phase 2: Interview Questions for Applicant")
+            .setColor("#e74c3c")
+            .setDescription(`Ask these remaining advanced questions to ${interaction.user.username} in DM/Interview channel:\n\n` +
+                "**1.** What specific skills or qualities can you bring to our staff team?\n" +
+                "**2.** If a higher staff member is abusing their power, what will you do?\n" +
+                "**3.** Are you currently staff on any other Discord or Minecraft server?\n" +
+                "**4.** What is your timezone and what hours are you most active?\n" +
+                "**5.** How do you handle stressful situations or heavy arguments in chat?\n" +
+                "**6.** Do you have basic knowledge of server plugin commands (like Essentials, AdvancedBan)?\n" +
+                "**7.** Why do you want to join our server specifically instead of others?\n" +
+                "**8.** If an active player breaks a minor rule, would you warn or instantly ban them?");
+
         if (logChannel) {
             await logChannel.send({ embeds: [appEmbed] });
-            await interaction.reply({ content: "Your application has been successfully submitted!", ephemeral: true });
+            await logChannel.send({ embeds: [remainingQuestionsEmbed] });
+            await interaction.reply({ content: "Your application Phase-1 has been successfully submitted! Admin team will review it soon.", ephemeral: true });
         } else {
             await interaction.reply({ content: "Error: Application log channel not found.", ephemeral: true });
         }
