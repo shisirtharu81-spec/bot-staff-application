@@ -3,7 +3,6 @@ from nextcord.ext import commands
 from nextcord.ui import Button, View, Select
 from flask import Flask
 from threading import Thread
-import os
 
 # ==========================================
 # 🌐 STEP 1: BACKGROUND WEB SERVER FOR 24/7 KEEP-ALIVE
@@ -15,11 +14,9 @@ def home():
     return "🟢 SonicMC Store Bot is operational and running 24/7!"
 
 def run_server():
-    # Binds server to port 8080 for cloud environments like Render
     app.run(host='0.0.0.0', port=8080)
 
 def keep_alive():
-    """Starts a background thread to keep the web server running independently."""
     t = Thread(target=run_server)
     t.start()
 
@@ -38,7 +35,6 @@ class ShopDropdown(Select):
         super().__init__(placeholder="⚡ Choose a category from the market...", min_values=1, max_values=1, options=options)
 
     async def callback(self, interaction: nextcord.Interaction):
-        # 🛠️ FIXED: Added to get the exact string value from the list
         selection = self.values
         
         embed = nextcord.Embed(
@@ -88,7 +84,7 @@ class SonicStoreBot(commands.Bot):
         print(f"🔥 STATUS: {self.user.name} is online!")
         print(f"🌐 24/7 Hosting Layer: ACTIVE")
         print(f"==========================================")
-        await self.change_presence(activity=nextcord.Streaming(name="SonicMC Market 🛒", url="https://twitch.tv/monstercat"))
+        await self.change_presence(activity=nextcord.Streaming(name="SonicMC Market 🛒", url="https://storemec.storemc.qzz.io"))
 
 bot = SonicStoreBot()
 
@@ -154,7 +150,6 @@ async def on_interaction(interaction: nextcord.Interaction):
                 )
             
             modal.callback = modal_callback
-            # 🛠️ FIXED: Modal is now correctly triggered
             await interaction.response.send_modal(modal)
 
 
@@ -162,8 +157,5 @@ async def on_interaction(interaction: nextcord.Interaction):
 # 🛑 STEP 6: EXECUTING HOST RUNTIME
 # ==========================================
 if __name__ == "__main__":
-    # Web server active karein background thread me
     keep_alive()
-    
-    # ⚠️ Apna token quotes "" ke andar daalna mat bhoolna
     bot.run("YOUR_DISCORD_BOT_TOKEN_HERE")
